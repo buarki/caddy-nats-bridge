@@ -83,10 +83,14 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	}
 
 	for k, headers := range resp.Header {
+		if k == "Nats-Service-Error" || k == "Nats-Service-Error-Code" {
+			continue
+		}
 		for _, header := range headers {
 			w.Header().Add(k, header)
 		}
 	}
+
 	code := resp.Header.Get("Nats-Service-Error-Code")
 	if code != "" && code != "200" {
 		status, err := strconv.Atoi(code)
