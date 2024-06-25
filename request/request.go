@@ -101,14 +101,6 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		}
 	}
 
-	if code != "" && code != "200" {
-		status, err := strconv.Atoi(code)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			return err
-		}
-		w.WriteHeader(status)
-	}
 	_, err = w.Write(resp.Data)
 	if err != nil {
 		return fmt.Errorf("could not write response back to HTTP Writer: %w", err)
