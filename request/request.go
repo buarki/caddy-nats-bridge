@@ -91,7 +91,7 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		}
 	}
 
-	code := resp.Header.Get("nats-service-error-code")
+	code := resp.Header.Get("Nats-Service-Error-Code")
 	if code != "" && code != "200" {
 		status, err := strconv.Atoi(code)
 		if err != nil {
