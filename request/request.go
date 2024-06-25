@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/CoverWhale/caddy-nats-bridge/common"
@@ -85,6 +86,15 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		for _, header := range headers {
 			w.Header().Add(k, header)
 		}
+	}
+	code := resp.Header.Get("Nats-Service-Error-Code")
+	if code != "" && code != "200" {
+		status, err := strconv.Atoi(code)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		w.WriteHeader(status)
 	}
 	_, err = w.Write(resp.Data)
 	if err != nil {
