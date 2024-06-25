@@ -96,7 +96,7 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		status, err := strconv.Atoi(code)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			return err
+			return fmt.Errorf("error converting status: %w", err)
 		}
 		w.WriteHeader(status)
 	}
