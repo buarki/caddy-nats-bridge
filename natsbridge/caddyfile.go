@@ -2,10 +2,11 @@ package natsbridge
 
 import (
 	"encoding/json"
+
+	"github.com/CoverWhale/caddy-nats-bridge/subscribe"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
-	"github.com/sandstorm/caddy-nats-bridge/subscribe"
 )
 
 func ParseGobalNatsOption(d *caddyfile.Dispenser, existingVal interface{}) (interface{}, error) {
@@ -52,6 +53,14 @@ func (app *NatsBridgeApp) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 			switch d.Val() {
 			case "url":
 				if !d.AllArgs(&server.NatsUrl) {
+					return d.ArgErr()
+				}
+			case "jwt":
+				if !d.AllArgs(&server.JWT) {
+					return d.ArgErr()
+				}
+			case "seed":
+				if !d.AllArgs(&server.Seed) {
 					return d.ArgErr()
 				}
 			case "userCredentialFile":

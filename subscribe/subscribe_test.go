@@ -2,14 +2,15 @@ package subscribe_test
 
 import (
 	"fmt"
-	"github.com/nats-io/nats.go"
-	_ "github.com/sandstorm/caddy-nats-bridge"
-	"github.com/sandstorm/caddy-nats-bridge/integrationtest"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	_ "github.com/CoverWhale/caddy-nats-bridge"
+	"github.com/CoverWhale/caddy-nats-bridge/integrationtest"
+	"github.com/nats-io/nats.go"
 )
 
 // TestSubscribeRequestToNats converts a NATS message to a HTTP request.

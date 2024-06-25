@@ -1,4 +1,4 @@
-module github.com/sandstorm/caddy-nats-bridge
+module github.com/CoverWhale/caddy-nats-bridge
 
 go 1.21
 

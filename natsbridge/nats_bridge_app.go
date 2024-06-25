@@ -3,10 +3,11 @@ package natsbridge
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/CoverWhale/caddy-nats-bridge/common"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/nats-io/nats.go"
-	"github.com/sandstorm/caddy-nats-bridge/common"
 	"go.uber.org/zap"
 )
 
@@ -27,6 +28,8 @@ type NatsServer struct {
 	NatsUrl            string `json:"url,omitempty"`
 	UserCredentialFile string `json:"userCredentialFile,omitempty"`
 	NkeyCredentialFile string `json:"nkeyCredentialFile,omitempty"`
+	JWT                string `json:"jwt,omitempty"`
+	Seed               string `json:"seed,omitempty"`
 	ClientName         string `json:"clientName,omitempty"`
 	InboxPrefix        string `json:"inboxPrefix,omitempty"`
 
@@ -79,6 +82,10 @@ func (app *NatsBridgeApp) Start() error {
 
 		var err error
 		var opts []nats.Option
+
+		if server.JWT != "" && server.Seed != "" {
+			opts = append(opts, nats.UserJWTAndSeed(server.JWT, server.Seed))
+		}
 
 		if server.ClientName != "" {
 			opts = append(opts, nats.Name(server.ClientName))

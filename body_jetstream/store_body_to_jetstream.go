@@ -3,17 +3,18 @@ package body_jetstream
 import (
 	"bytes"
 	"fmt"
-	"github.com/caddyserver/caddy/v2"
-	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/nats-io/nats.go"
-	"github.com/nats-io/nuid"
-	"github.com/sandstorm/caddy-nats-bridge/common"
-	"github.com/sandstorm/caddy-nats-bridge/natsbridge"
-	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"sync/atomic"
 	"time"
+
+	"github.com/CoverWhale/caddy-nats-bridge/common"
+	"github.com/CoverWhale/caddy-nats-bridge/natsbridge"
+	"github.com/caddyserver/caddy/v2"
+	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
+	"github.com/nats-io/nats.go"
+	"github.com/nats-io/nuid"
+	"go.uber.org/zap"
 )
 
 type StoreBodyToJetStream struct {

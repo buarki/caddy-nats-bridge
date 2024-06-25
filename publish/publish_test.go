@@ -3,13 +3,14 @@ package publish_test
 import (
 	"bufio"
 	"fmt"
-	"github.com/nats-io/nats.go"
-	_ "github.com/sandstorm/caddy-nats-bridge"
-	"github.com/sandstorm/caddy-nats-bridge/integrationtest"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
+
+	_ "github.com/CoverWhale/caddy-nats-bridge"
+	"github.com/CoverWhale/caddy-nats-bridge/integrationtest"
+	"github.com/nats-io/nats.go"
 )
 
 // TestPublishToNats converts a HTTP request to a NATS Publication.

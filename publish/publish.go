@@ -2,13 +2,14 @@ package publish
 
 import (
 	"fmt"
+	"net/http"
+
+	"github.com/CoverWhale/caddy-nats-bridge/common"
+	"github.com/CoverWhale/caddy-nats-bridge/natsbridge"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"github.com/sandstorm/caddy-nats-bridge/common"
-	"github.com/sandstorm/caddy-nats-bridge/natsbridge"
 	"go.uber.org/zap"
-	"net/http"
 )
 
 type Publish struct {

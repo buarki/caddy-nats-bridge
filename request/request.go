@@ -2,15 +2,16 @@ package request
 
 import (
 	"fmt"
+	"net/http"
+	"time"
+
+	"github.com/CoverWhale/caddy-nats-bridge/common"
+	"github.com/CoverWhale/caddy-nats-bridge/natsbridge"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
 	"github.com/nats-io/nats.go"
-	"github.com/sandstorm/caddy-nats-bridge/common"
-	"github.com/sandstorm/caddy-nats-bridge/natsbridge"
 	"go.uber.org/zap"
-	"net/http"
-	"time"
 )
 
 type Request struct {

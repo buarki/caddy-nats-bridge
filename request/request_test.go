@@ -2,13 +2,14 @@ package request_test
 
 import (
 	"fmt"
-	"github.com/nats-io/nats.go"
-	_ "github.com/sandstorm/caddy-nats-bridge"
-	"github.com/sandstorm/caddy-nats-bridge/integrationtest"
 	"io"
 	"net/http"
 	"testing"
 	"time"
+
+	_ "github.com/CoverWhale/caddy-nats-bridge"
+	"github.com/CoverWhale/caddy-nats-bridge/integrationtest"
+	"github.com/nats-io/nats.go"
 )
 
 // TestRequestToNats converts a HTTP request to a NATS Publication, and vice-versa

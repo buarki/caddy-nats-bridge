@@ -2,16 +2,16 @@ package logoutput_test
 
 import (
 	"encoding/json"
-	"github.com/nats-io/nats.go"
-)
-
-import (
 	"fmt"
-	_ "github.com/sandstorm/caddy-nats-bridge"
-	"github.com/sandstorm/caddy-nats-bridge/integrationtest"
+
+	"github.com/nats-io/nats.go"
+
 	"net/http"
 	"testing"
 	"time"
+
+	_ "github.com/CoverWhale/caddy-nats-bridge"
+	"github.com/CoverWhale/caddy-nats-bridge/integrationtest"
 )
 
 // example log message:
