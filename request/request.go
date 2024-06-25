@@ -82,6 +82,16 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		return fmt.Errorf("could not request NATS message: %w", err)
 	}
 
+	code := resp.Header.Get("Nats-Service-Error-Code")
+	if code != "" && code != "200" {
+		status, err := strconv.Atoi(code)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return err
+		}
+		w.WriteHeader(status)
+	}
+
 	for k, headers := range resp.Header {
 		if k == "Nats-Service-Error" || k == "Nats-Service-Error-Code" || k == "nats-service-error" || k == "nats-service-error-code" {
 			continue
@@ -91,7 +101,6 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		}
 	}
 
-	code := resp.Header.Get("Nats-Service-Error-Code")
 	if code != "" && code != "200" {
 		status, err := strconv.Atoi(code)
 		if err != nil {
