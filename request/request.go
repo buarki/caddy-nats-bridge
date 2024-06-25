@@ -1,6 +1,7 @@
 package request
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -70,17 +71,14 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	}
 
 	resp, err := server.Conn.RequestMsg(msg, p.Timeout)
-	if err != nil {
-		return fmt.Errorf("could not request NATS message: %w", err)
-	}
-
-	if err == nats.ErrNoResponders {
+	if err != nil && errors.Is(err, nats.ErrNoResponders) {
 		w.WriteHeader(http.StatusNotFound)
 		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found.", zap.String("subject", subj))
 		return err
-	} else if err != nil {
+	}
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return err
+		return fmt.Errorf("could not request NATS message: %w", err)
 	}
 
 	for k, headers := range resp.Header {
