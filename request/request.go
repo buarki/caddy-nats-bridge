@@ -82,6 +82,15 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		return fmt.Errorf("could not request NATS message: %w", err)
 	}
 
+	for k, headers := range resp.Header {
+		if k == "Nats-Service-Error" || k == "Nats-Service-Error-Code" || k == "nats-service-error" || k == "nats-service-error-code" {
+			continue
+		}
+		for _, header := range headers {
+			w.Header().Add(k, header)
+		}
+	}
+
 	code := resp.Header.Get("Nats-Service-Error-Code")
 	if code != "" && code != "200" {
 		status, err := strconv.Atoi(code)
@@ -90,15 +99,6 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 			return err
 		}
 		w.WriteHeader(status)
-	}
-
-	for k, headers := range resp.Header {
-		if k == "Nats-Service-Error" || k == "Nats-Service-Error-Code" || k == "nats-service-error" || k == "nats-service-error-code" {
-			continue
-		}
-		for _, header := range headers {
-			w.Header().Add(k, header)
-		}
 	}
 
 	_, err = w.Write(resp.Data)
