@@ -83,7 +83,8 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	}
 
 	for k, headers := range resp.Header {
-		if k == "Nats-Service-Error" || k == "Nats-Service-Error-Code" || k == "nats-service-error" || k == "nats-service-error-code" {
+		// strip out these headers from the response
+		if k == "Nats-Service-Error" || k == "Nats-Service-Error-Code" || k == "nats-service-error" || k == "nats-service-error-code" || k == "Content-Length" {
 			continue
 		}
 		for _, header := range headers {
