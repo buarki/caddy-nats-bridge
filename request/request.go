@@ -70,7 +70,7 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		p.logger.Warn(fmt.Sprintf("Request sent with invalid characters %v", err.Error()))
-		return err
+		return nil
 	}
 
 	start := time.Now()
@@ -81,14 +81,14 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	resp, err := server.Conn.RequestMsg(msg, p.Timeout)
 	if err != nil && errors.Is(err, nats.ErrNoResponders) {
 		w.WriteHeader(http.StatusNotFound)
-		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found.", zap.String("subject", subj))
-		return err
+		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found.")
+		return nil
 	}
 	p.logger.Debug("nats_request", zap.String("duration", fmt.Sprintf("%d ms", time.Since(start).Milliseconds())))
 	if err != nil && errors.Is(err, nats.ErrTimeout) {
 		w.WriteHeader(http.StatusGatewayTimeout)
 		p.logger.Warn("Request timed out", zap.String("subject", subj))
-		return err
+		return nil
 	}
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
