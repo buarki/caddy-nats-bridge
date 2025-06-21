@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/CoverWhale/caddy-nats-bridge"
-	"github.com/CoverWhale/caddy-nats-bridge/integrationtest"
+	_ "github.com/buarki/caddy-nats-bridge"
+	"github.com/buarki/caddy-nats-bridge/integrationtest"
 	"github.com/nats-io/nats.go"
 )
 

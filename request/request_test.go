@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	_ "github.com/CoverWhale/caddy-nats-bridge"
-	"github.com/CoverWhale/caddy-nats-bridge/integrationtest"
+	_ "github.com/buarki/caddy-nats-bridge"
+	"github.com/buarki/caddy-nats-bridge/integrationtest"
 	"github.com/nats-io/nats.go"
 )
 
@@ -124,6 +124,183 @@ func TestRequestToNats(t *testing.T) {
 				return msg.Respond([]byte("respData"))
 			},
 		},
+
+		{
+			description: "Global default timeout should be used when no route-level timeout is specified",
+			sendHttpRequestAndAssertResponse: func() error {
+				// 1) send initial HTTP request (will be validated on the NATS handler side)
+				req, err := http.NewRequest("GET", "http://localhost:8889/test/hi", nil)
+				if err != nil {
+					return err
+				}
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return fmt.Errorf("HTTP request failed: %w", err)
+				}
+
+				// 3) validate HTTP response - should get a timeout error (504 Gateway Timeout)
+				if res.StatusCode != http.StatusGatewayTimeout {
+					return fmt.Errorf("expected HTTP status 504 (Gateway Timeout), got %d", res.StatusCode)
+				}
+
+				return nil
+			},
+			CaddyfileSnippet: `
+				route /test/* {
+					nats_request greet.hello
+				}
+			`,
+			handleNatsMessage: func(msg *nats.Msg, nc *nats.Conn) error {
+				// 2) simulate a slow NATS response that exceeds the global timeout (5s)
+				// This should cause the request to timeout
+				time.Sleep(6 * time.Second)
+				return msg.Respond([]byte("respData"))
+			},
+		},
+
+		{
+			description: "Route-level timeout should override global default timeout",
+			sendHttpRequestAndAssertResponse: func() error {
+				// 1) send initial HTTP request (will be validated on the NATS handler side)
+				req, err := http.NewRequest("GET", "http://localhost:8889/test/hi", nil)
+				if err != nil {
+					return err
+				}
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return fmt.Errorf("HTTP request failed: %w", err)
+				}
+
+				// 3) validate HTTP response - should get a timeout error (504 Gateway Timeout)
+				// because the route-level timeout (1s) is shorter than the NATS response delay (2s)
+				if res.StatusCode != http.StatusGatewayTimeout {
+					return fmt.Errorf("expected HTTP status 504 (Gateway Timeout), got %d", res.StatusCode)
+				}
+
+				return nil
+			},
+			CaddyfileSnippet: `
+				route /test/* {
+					nats_request greet.hello {
+						timeout 1s
+					}
+				}
+			`,
+			handleNatsMessage: func(msg *nats.Msg, nc *nats.Conn) error {
+				// 2) simulate a slow NATS response that exceeds the route-level timeout (1s)
+				// but is shorter than the global timeout (5s)
+				time.Sleep(2 * time.Second)
+				return msg.Respond([]byte("respData"))
+			},
+		},
+
+		{
+			description: "Request should succeed when NATS response is within global default timeout",
+			sendHttpRequestAndAssertResponse: func() error {
+				// 1) send initial HTTP request (will be validated on the NATS handler side)
+				req, err := http.NewRequest("GET", "http://localhost:8889/test/hi", nil)
+				if err != nil {
+					return err
+				}
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return fmt.Errorf("HTTP request failed: %w", err)
+				}
+
+				// 3) validate HTTP response - should succeed (200 OK)
+				if res.StatusCode != http.StatusOK {
+					return fmt.Errorf("expected HTTP status 200 (OK), got %d", res.StatusCode)
+				}
+
+				b, err := io.ReadAll(res.Body)
+				if err != nil {
+					return fmt.Errorf("could not read response body: %w", err)
+				}
+				if string(b) != "respData" {
+					return fmt.Errorf("wrong response body. Expected: respData. Actual: %s", string(b))
+				}
+
+				return nil
+			},
+			CaddyfileSnippet: `
+				route /test/* {
+					nats_request greet.hello
+				}
+			`,
+			handleNatsMessage: func(msg *nats.Msg, nc *nats.Conn) error {
+				// 2) simulate a fast NATS response that is within the global timeout (5s)
+				time.Sleep(1 * time.Second)
+				return msg.Respond([]byte("respData"))
+			},
+		},
+
+		{
+			description: "Route-level timeout should work when no global default is set",
+			sendHttpRequestAndAssertResponse: func() error {
+				// 1) send initial HTTP request (will be validated on the NATS handler side)
+				req, err := http.NewRequest("GET", "http://localhost:8889/test/hi", nil)
+				if err != nil {
+					return err
+				}
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return fmt.Errorf("HTTP request failed: %w", err)
+				}
+
+				// 3) validate HTTP response - should get a timeout error (504 Gateway Timeout)
+				// because the route-level timeout (1s) is shorter than the NATS response delay (2s)
+				if res.StatusCode != http.StatusGatewayTimeout {
+					return fmt.Errorf("expected HTTP status 504 (Gateway Timeout), got %d", res.StatusCode)
+				}
+
+				return nil
+			},
+			CaddyfileSnippet: `
+				route /test/* {
+					nats_request greet.hello {
+						timeout 1s
+					}
+				}
+			`,
+			handleNatsMessage: func(msg *nats.Msg, nc *nats.Conn) error {
+				// 2) simulate a slow NATS response that exceeds the route-level timeout (1s)
+				time.Sleep(2 * time.Second)
+				return msg.Respond([]byte("respData"))
+			},
+		},
+
+		{
+			description: "Package default timeout should be used when neither global nor route-level is set",
+			sendHttpRequestAndAssertResponse: func() error {
+				// 1) send initial HTTP request (will be validated on the NATS handler side)
+				req, err := http.NewRequest("GET", "http://localhost:8889/test/hi", nil)
+				if err != nil {
+					return err
+				}
+				res, err := http.DefaultClient.Do(req)
+				if err != nil {
+					return fmt.Errorf("HTTP request failed: %w", err)
+				}
+
+				// 3) validate HTTP response - should get a timeout error (504 Gateway Timeout)
+				// because the package default timeout (60s) is shorter than the NATS response delay (61s)
+				if res.StatusCode != http.StatusGatewayTimeout {
+					return fmt.Errorf("expected HTTP status 504 (Gateway Timeout), got %d", res.StatusCode)
+				}
+
+				return nil
+			},
+			CaddyfileSnippet: `
+				route /test/* {
+					nats_request greet.hello
+				}
+			`,
+			handleNatsMessage: func(msg *nats.Msg, nc *nats.Conn) error {
+				// 2) simulate a slow NATS response that exceeds the package default timeout (60s)
+				time.Sleep(61 * time.Second)
+				return msg.Respond([]byte("respData"))
+			},
+		},
 		// WILDCARDS!!
 	}
 
@@ -138,11 +315,36 @@ func TestRequestToNats(t *testing.T) {
 			defer subscription.Unsubscribe()
 			integrationtest.FailOnErr("error subscribing to greet.>: %w", err, t)
 
-			caddyTester.InitServer(fmt.Sprintf(integrationtest.DefaultCaddyConf+`
-				:8889 {
-					%s
-				}
-			`, "", testcase.CaddyfileSnippet), "caddyfile")
+			// Use different Caddy configuration for the global timeout test
+			var caddyConfig string
+			if testcase.description == "Global default timeout should be used when no route-level timeout is specified" ||
+				testcase.description == "Route-level timeout should override global default timeout" ||
+				testcase.description == "Request should succeed when NATS response is within global default timeout" {
+				// Configure NATS with global default timeout
+				caddyConfig = fmt.Sprintf(`
+					{
+						default_bind 127.0.0.1
+						http_port 8889
+						admin 127.0.0.1:2999
+						nats {
+							url 127.0.0.1:8369
+							defaultTimeout 5s
+						}
+					}
+					:8889 {
+						%s
+					}
+				`, testcase.CaddyfileSnippet)
+			} else {
+				// Use default configuration for other tests (no global timeout set)
+				caddyConfig = fmt.Sprintf(integrationtest.DefaultCaddyConf+`
+					:8889 {
+						%s
+					}
+				`, "", testcase.CaddyfileSnippet)
+			}
+
+			caddyTester.InitServer(caddyConfig, "caddyfile")
 
 			// HTTP Request and assertion Goroutine
 			httpResultChan := make(chan error)
@@ -165,7 +367,7 @@ func TestRequestToNats(t *testing.T) {
 			// now, wait until the HTTP request goroutine finishes (and did its assertions)
 			httpResult := <-httpResultChan
 			if httpResult != nil {
-				t.Fatalf("error with HTTP Response message: %s", err)
+				t.Fatalf("error with HTTP Response message: %s", httpResult)
 			}
 		})
 	}

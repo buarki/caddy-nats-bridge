@@ -1,0 +1,44 @@
+{
+	nats {
+		url 127.0.0.1:4222
+		defaultTimeout 7s
+	}
+
+	log {
+		level debug
+	}
+}
+
+http://127.0.0.1:8888 {
+	@get method GET
+
+	route /api/fast/* {
+		route @get {
+			nats_request api.fast.{http.request.uri.path.1}
+		}
+	}
+
+	route /api/slow/* {
+		route @get {
+			nats_request api.slow.{http.request.uri.path.1} {
+				timeout 2s
+			}
+		}
+	}
+
+	route /api/very-slow/* {
+		route @get {
+			nats_request api.very-slow.{http.request.uri.path.1}
+		}
+	}
+
+	route /api/custom/* {
+		route @get {
+			nats_request api.custom.{http.request.uri.path.1} {
+				timeout 10s
+			}
+		}
+	}
+
+	respond 405
+}

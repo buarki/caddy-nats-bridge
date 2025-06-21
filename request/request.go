@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/CoverWhale/caddy-nats-bridge/common"
-	"github.com/CoverWhale/caddy-nats-bridge/natsbridge"
+	"github.com/buarki/caddy-nats-bridge/common"
+	"github.com/buarki/caddy-nats-bridge/natsbridge"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
@@ -16,10 +16,12 @@ import (
 	"go.uber.org/zap"
 )
 
+var ErrTimeoutNotInitialized = errors.New("timeout not initialized")
+
 type Request struct {
-	Subject     string        `json:"subject,omitempty"`
-	Timeout     time.Duration `json:"timeout,omitempty"`
-	ServerAlias string        `json:"serverAlias,omitempty"`
+	Subject     string         `json:"subject,omitempty"`
+	Timeout     *time.Duration `json:"timeout,omitempty"`
+	ServerAlias string         `json:"serverAlias,omitempty"`
 
 	logger *zap.Logger
 	app    *natsbridge.NatsBridgeApp
@@ -31,7 +33,6 @@ func (Request) CaddyModule() caddy.ModuleInfo {
 		New: func() caddy.Module {
 			// Default values
 			return &Request{
-				Timeout:     60 * time.Second,
 				ServerAlias: "default",
 			}
 		},
@@ -47,6 +48,24 @@ func (p *Request) Provision(ctx caddy.Context) error {
 	}
 
 	p.app = natsAppIface.(*natsbridge.NatsBridgeApp)
+
+	server, ok := p.app.Servers[p.ServerAlias]
+	if !ok {
+		return fmt.Errorf("NATS server alias %s not found", p.ServerAlias)
+	}
+
+	routeLevelTimeoutNotDefined := p.Timeout == nil
+	if routeLevelTimeoutNotDefined {
+		if server.DefaultTimeout != nil {
+			p.Timeout = server.DefaultTimeout
+			p.logger.Debug("using global default timeout", zap.Duration("timeout", *p.Timeout))
+		} else {
+			p.Timeout = &natsbridge.DefaultTimeout
+			p.logger.Debug("using fallback default timeout", zap.Duration("timeout", *p.Timeout))
+		}
+	} else {
+		p.logger.Debug("using custom timeout at route level", zap.Duration("timeout", *p.Timeout))
+	}
 
 	return nil
 }
@@ -78,16 +97,21 @@ func (p Request) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 		p.logger.Debug("http_request", zap.String("duration", fmt.Sprintf("%d ms", time.Since(start).Milliseconds())))
 	}()
 
-	resp, err := server.Conn.RequestMsg(msg, p.Timeout)
+	if p.Timeout == nil {
+		p.logger.Error("timeout not initialized", zap.String("subject", subj))
+		return ErrTimeoutNotInitialized
+	}
+
+	resp, err := server.Conn.RequestMsg(msg, *p.Timeout)
 	if err != nil && errors.Is(err, nats.ErrNoResponders) {
 		w.WriteHeader(http.StatusNotFound)
-		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found.")
+		p.logger.Warn("No Responders for NATS subject - answering with HTTP Status Not Found.", zap.String("subject", subj), zap.String("timeout", p.Timeout.String()))
 		return nil
 	}
 	p.logger.Debug("nats_request", zap.String("duration", fmt.Sprintf("%d ms", time.Since(start).Milliseconds())))
 	if err != nil && errors.Is(err, nats.ErrTimeout) {
 		w.WriteHeader(http.StatusGatewayTimeout)
-		p.logger.Warn("Request timed out", zap.String("subject", subj))
+		p.logger.Warn("Request timed out", zap.String("subject", subj), zap.String("timeout", p.Timeout.String()))
 		return nil
 	}
 	if err != nil {
