@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/CoverWhale/caddy-nats-bridge/natsbridge"
+	"github.com/buarki/caddy-nats-bridge/natsbridge"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/nats-io/nats.go"

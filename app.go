@@ -1,12 +1,12 @@
 package caddy_nats_bridge
 
 import (
-	"github.com/CoverWhale/caddy-nats-bridge/body_jetstream"
-	"github.com/CoverWhale/caddy-nats-bridge/logoutput"
-	"github.com/CoverWhale/caddy-nats-bridge/natsbridge"
-	"github.com/CoverWhale/caddy-nats-bridge/publish"
-	"github.com/CoverWhale/caddy-nats-bridge/request"
-	"github.com/CoverWhale/caddy-nats-bridge/subscribe"
+	"github.com/buarki/caddy-nats-bridge/body_jetstream"
+	"github.com/buarki/caddy-nats-bridge/logoutput"
+	"github.com/buarki/caddy-nats-bridge/natsbridge"
+	"github.com/buarki/caddy-nats-bridge/publish"
+	"github.com/buarki/caddy-nats-bridge/request"
+	"github.com/buarki/caddy-nats-bridge/subscribe"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 )

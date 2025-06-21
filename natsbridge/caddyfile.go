@@ -2,8 +2,9 @@ package natsbridge
 
 import (
 	"encoding/json"
+	"time"
 
-	"github.com/CoverWhale/caddy-nats-bridge/subscribe"
+	"github.com/buarki/caddy-nats-bridge/subscribe"
 	"github.com/caddyserver/caddy/v2/caddyconfig"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
@@ -86,6 +87,16 @@ func (app *NatsBridgeApp) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 				}
 				jsonHandler := caddyconfig.JSONModuleObject(s, "handler", s.CaddyModule().ID.Name(), nil)
 				server.HandlersRaw = append(server.HandlersRaw, jsonHandler)
+			case "defaultTimeout":
+				if !d.NextArg() {
+					return d.ArgErr()
+				}
+				t, err := time.ParseDuration(d.Val())
+				if err != nil {
+					return d.Err("given default timeout is not a valid duration")
+				}
+
+				server.DefaultTimeout = &t
 			default:
 				return d.Errf("unrecognized subdirective: %s", d.Val())
 			}

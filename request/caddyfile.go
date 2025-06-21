@@ -1,10 +1,11 @@
 package request
 
 import (
+	"time"
+
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/caddyserver/caddy/v2/caddyconfig/httpcaddyfile"
 	"github.com/caddyserver/caddy/v2/modules/caddyhttp"
-	"time"
 )
 
 // ParseRequestHandler parses the nats_request directive. Syntax:
@@ -41,7 +42,7 @@ func (p *Request) UnmarshalCaddyfile(d *caddyfile.Dispenser) error {
 					return d.Err("timeout is not a valid duration")
 				}
 
-				p.Timeout = t
+				p.Timeout = &t
 			default:
 				return d.Errf("unrecognized subdirective: %s", d.Val())
 			}

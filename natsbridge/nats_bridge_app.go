@@ -3,12 +3,17 @@ package natsbridge
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
-	"github.com/CoverWhale/caddy-nats-bridge/common"
+	"github.com/buarki/caddy-nats-bridge/common"
 	"github.com/caddyserver/caddy/v2"
 	"github.com/caddyserver/caddy/v2/caddyconfig/caddyfile"
 	"github.com/nats-io/nats.go"
 	"go.uber.org/zap"
+)
+
+var (
+	DefaultTimeout = 60 * time.Second
 )
 
 // NatsBridgeApp is the natsbridge nats bridge for Caddy.
@@ -25,13 +30,14 @@ type NatsBridgeApp struct {
 
 type NatsServer struct {
 	// can also contain comma-separated list of URLs, see nats.Connect
-	NatsUrl            string `json:"url,omitempty"`
-	UserCredentialFile string `json:"userCredentialFile,omitempty"`
-	NkeyCredentialFile string `json:"nkeyCredentialFile,omitempty"`
-	JWT                string `json:"jwt,omitempty"`
-	Seed               string `json:"seed,omitempty"`
-	ClientName         string `json:"clientName,omitempty"`
-	InboxPrefix        string `json:"inboxPrefix,omitempty"`
+	NatsUrl            string         `json:"url,omitempty"`
+	UserCredentialFile string         `json:"userCredentialFile,omitempty"`
+	NkeyCredentialFile string         `json:"nkeyCredentialFile,omitempty"`
+	JWT                string         `json:"jwt,omitempty"`
+	Seed               string         `json:"seed,omitempty"`
+	ClientName         string         `json:"clientName,omitempty"`
+	InboxPrefix        string         `json:"inboxPrefix,omitempty"`
+	DefaultTimeout     *time.Duration `json:"defaultTimeout,omitempty"`
 
 	HandlersRaw []json.RawMessage `json:"handle,omitempty" caddy:"namespace=nats.handlers inline_key=handler"`
 
@@ -58,6 +64,19 @@ func (app *NatsBridgeApp) Provision(ctx caddy.Context) error {
 	// Set logger and NatsUrl
 	app.ctx = ctx
 	app.logger = ctx.Logger(app)
+
+	// Set default timeout for each server if not already set
+	for _, server := range app.Servers {
+		if server.DefaultTimeout == nil {
+			server.DefaultTimeout = &DefaultTimeout
+			app.logger.Debug("setting default timeout for server",
+				zap.Duration("timeout", DefaultTimeout))
+		} else {
+			// TODO remove this verbose one
+			app.logger.Debug("using given default timeout for server",
+				zap.Duration("timeout", *server.DefaultTimeout))
+		}
+	}
 
 	// Set up handlers for each server
 	for _, server := range app.Servers {
