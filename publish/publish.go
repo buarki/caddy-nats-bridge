@@ -52,7 +52,7 @@ func (p Publish) ServeHTTP(w http.ResponseWriter, r *http.Request, next caddyhtt
 	//TODO: What method is best here? ReplaceAll vs ReplaceWithErr?
 	subj := repl.ReplaceAll(p.Subject, "")
 
-	p.logger.Debug("publishing NATS message",
+	p.logger.Debug(">> publishing NATS message",
 		zap.String("subject", subj),
 		zap.Any("headers", common.RedactHeaders(r.Header)))
 
