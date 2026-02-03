@@ -1,0 +1,43 @@
+# Example showing HTTP header logging with redaction support
+# 
+# This example demonstrates how HTTP headers are logged when publishing NATS messages,
+# and how to redact sensitive headers using the LOGGER_REDACT_HEADERS environment variable.
+#
+# Usage without redaction:
+#   ./caddy run --config Caddyfile
+#
+# Usage with redaction:
+#   LOGGER_REDACT_HEADERS="Authorization,X-API-Key" ./caddy run --config Caddyfile
+#
+# The LOGGER_REDACT_HEADERS variable accepts a comma-separated list of header names
+# (case-insensitive). Headers in this list will be logged with "***" instead of their values.
+
+{
+	admin localhost:2999
+	log {
+		level DEBUG
+	}
+	
+	nats {
+		url 127.0.0.1:4222
+		clientName "Header Logging Example"
+	}
+}
+
+http://127.0.0.1:8888 {
+	# Example using nats_request - headers will be logged when publishing the NATS message
+	route /test/* {
+		nats_request test.subject.{http.request.uri.path.1}
+	}
+	
+	# Example using nats_publish - headers will also be logged here
+	route /publish/* {
+		nats_publish test.publish.{http.request.uri.path.1}
+		respond "Published" 200
+	}
+	
+	# Simple health check
+	route /health {
+		respond "OK" 200
+	}
+}

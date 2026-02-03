@@ -1,0 +1,40 @@
+# Example showing how to configure NATS request timeout via environment variable
+# 
+# Usage:
+#   export NATS_REQUEST_DEFAULT_TIMEOUT=30s
+#   ./caddy run --config Caddyfile
+#
+# Or set it inline:
+#   NATS_REQUEST_DEFAULT_TIMEOUT=30s ./caddy run --config Caddyfile
+
+{
+	nats {
+		url 127.0.0.1:4222
+		clientName "Timeout Config Example"
+	}
+}
+
+http://127.0.0.1:8888 {
+	# This will use the timeout from NATS_REQUEST_DEFAULT_TIMEOUT environment variable
+	# If not set, it will default to 60s
+	route /api/weather/* {
+		nats_request cli.weather.{http.request.uri.path.1}
+	}
+
+	# This will override the environment variable timeout with a specific value
+	route /api/data/* {
+		nats_request cli.data.{http.request.uri.path.1} {
+			timeout 10s  # Override environment variable for this specific handler
+		}
+	}
+
+	# This will use the environment variable timeout (or 60s default)
+	route /api/user/* {
+		nats_request cli.user.{http.request.uri.path.1}
+	}
+
+	# Simple health check
+	route /health {
+		respond "OK" 200
+	}
+} 

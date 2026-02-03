@@ -1,1 +1,4 @@
 caddy
+go.work
+go.work.sum
+go.mod.local
