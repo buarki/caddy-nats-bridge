@@ -12,8 +12,8 @@ var (
 	redactHeadersOnce sync.Once
 )
 
-// getRedactHeadersList retorna a lista de headers que devem ser redatados
-// baseado na variável de ambiente LOGGER_REDACT_HEADERS
+// getRedactHeadersList returns the list of headers that should be redacted
+// based on the LOGGER_REDACT_HEADERS environment variable
 func getRedactHeadersList() []string {
 	redactHeadersOnce.Do(func() {
 		envValue := os.Getenv("LOGGER_REDACT_HEADERS")
@@ -22,14 +22,14 @@ func getRedactHeadersList() []string {
 			return
 		}
 
-		// Parsear lista separada por vírgulas
+		// Parse comma-separated list
 		parts := strings.Split(envValue, ",")
 		redactHeadersList = make([]string, 0, len(parts))
 		
 		for _, part := range parts {
 			trimmed := strings.TrimSpace(part)
 			if trimmed != "" {
-				// Normalizar para lowercase para comparação case-insensitive
+				// Normalize to lowercase for case-insensitive comparison
 				redactHeadersList = append(redactHeadersList, strings.ToLower(trimmed))
 			}
 		}
@@ -52,9 +52,9 @@ func shouldRedact(headerName string) bool {
 	return false
 }
 
-// RedactHeaders retorna uma cópia dos headers com valores redatados
-// Headers na lista LOGGER_REDACT_HEADERS terão valores substituídos por "***"
-// A comparação é case-insensitive
+// RedactHeaders returns a copy of headers with redacted values
+// Headers in the LOGGER_REDACT_HEADERS list will have their values replaced with "***"
+// The comparison is case-insensitive
 func RedactHeaders(headers http.Header) map[string][]string {
 	if headers == nil {
 		return nil
@@ -64,14 +64,14 @@ func RedactHeaders(headers http.Header) map[string][]string {
 	
 	for name, values := range headers {
 		if shouldRedact(name) {
-			// Redatar todos os valores deste header
+			// Redact all values for this header
 			redactedValues := make([]string, len(values))
 			for i := range values {
 				redactedValues[i] = "***"
 			}
 			result[name] = redactedValues
 		} else {
-			// Manter valores originais
+			// Keep original values
 			result[name] = values
 		}
 	}
@@ -79,8 +79,8 @@ func RedactHeaders(headers http.Header) map[string][]string {
 	return result
 }
 
-// resetRedactHeadersCache reseta o cache de headers para redação
-// Esta função é usada apenas para testes
+// resetRedactHeadersCache resets the header redaction cache
+// This function is used only for testing
 func resetRedactHeadersCache() {
 	redactHeadersList = nil
 	redactHeadersOnce = sync.Once{}

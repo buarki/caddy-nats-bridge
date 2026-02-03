@@ -8,10 +8,10 @@ import (
 )
 
 func TestRedactHeaders_NoEnvVar(t *testing.T) {
-	// Garantir que a variável não está setada
+	// Ensure the variable is not set
 	os.Unsetenv("LOGGER_REDACT_HEADERS")
 	
-	// Resetar o cache para forçar re-parse
+	// Reset cache to force re-parse
 	resetRedactHeadersCache()
 	
 	headers := http.Header{
@@ -21,7 +21,7 @@ func TestRedactHeaders_NoEnvVar(t *testing.T) {
 	
 	result := RedactHeaders(headers)
 	
-	// Headers não devem ser redatados
+	// Headers should not be redacted
 	if result["Authorization"][0] != "Bearer token123" {
 		t.Errorf("expected 'Bearer token123', got '%s'", result["Authorization"][0])
 	}
@@ -31,11 +31,11 @@ func TestRedactHeaders_NoEnvVar(t *testing.T) {
 }
 
 func TestRedactHeaders_WithEnvVar(t *testing.T) {
-	// Setar variável de ambiente
+	// Set environment variable
 	os.Setenv("LOGGER_REDACT_HEADERS", "Authorization")
 	defer os.Unsetenv("LOGGER_REDACT_HEADERS")
 	
-	// Resetar o cache para forçar re-parse
+	// Reset cache to force re-parse
 	resetRedactHeadersCache()
 	
 	headers := http.Header{
@@ -45,38 +45,38 @@ func TestRedactHeaders_WithEnvVar(t *testing.T) {
 	
 	result := RedactHeaders(headers)
 	
-	// Authorization deve ser redatado
+	// Authorization should be redacted
 	if result["Authorization"][0] != "***" {
 		t.Errorf("expected '***', got '%s'", result["Authorization"][0])
 	}
 	
-	// Content-Type não deve ser redatado
+	// Content-Type should not be redacted
 	if result["Content-Type"][0] != "application/json" {
 		t.Errorf("expected 'application/json', got '%s'", result["Content-Type"][0])
 	}
 }
 
 func TestRedactHeaders_CaseInsensitive(t *testing.T) {
-	// Setar variável com "Authorization" (maiúscula)
+	// Set variable with "Authorization" (uppercase)
 	os.Setenv("LOGGER_REDACT_HEADERS", "Authorization")
 	defer os.Unsetenv("LOGGER_REDACT_HEADERS")
 	
-	// Resetar o cache
+	// Reset cache
 	resetRedactHeadersCache()
 	
-	// Testar com "authorization" (minúscula)
+	// Test with "authorization" (lowercase)
 	headers := http.Header{
 		"authorization": []string{"Bearer token123"},
 	}
 	
 	result := RedactHeaders(headers)
 	
-	// Deve ser redatado mesmo com case diferente
+	// Should be redacted even with different case
 	if result["authorization"][0] != "***" {
 		t.Errorf("expected '***', got '%s'", result["authorization"][0])
 	}
 	
-	// Resetar novamente e testar o contrário
+	// Reset again and test the opposite
 	resetRedactHeadersCache()
 	os.Setenv("LOGGER_REDACT_HEADERS", "authorization")
 	
@@ -92,11 +92,11 @@ func TestRedactHeaders_CaseInsensitive(t *testing.T) {
 }
 
 func TestRedactHeaders_MultipleHeaders(t *testing.T) {
-	// Setar múltiplos headers para redação
+	// Set multiple headers for redaction
 	os.Setenv("LOGGER_REDACT_HEADERS", "Authorization,X-API-Key")
 	defer os.Unsetenv("LOGGER_REDACT_HEADERS")
 	
-	// Resetar o cache
+	// Reset cache
 	resetRedactHeadersCache()
 	
 	headers := http.Header{
@@ -107,17 +107,17 @@ func TestRedactHeaders_MultipleHeaders(t *testing.T) {
 	
 	result := RedactHeaders(headers)
 	
-	// Authorization deve ser redatado
+	// Authorization should be redacted
 	if result["Authorization"][0] != "***" {
 		t.Errorf("expected '***', got '%s'", result["Authorization"][0])
 	}
 	
-	// X-API-Key deve ser redatado
+	// X-API-Key should be redacted
 	if result["X-API-Key"][0] != "***" {
 		t.Errorf("expected '***', got '%s'", result["X-API-Key"][0])
 	}
 	
-	// Content-Type não deve ser redatado
+	// Content-Type should not be redacted
 	if result["Content-Type"][0] != "application/json" {
 		t.Errorf("expected 'application/json', got '%s'", result["Content-Type"][0])
 	}
@@ -136,7 +136,7 @@ func TestRedactHeaders_EmptyValue(t *testing.T) {
 	
 	result := RedactHeaders(headers)
 	
-	// Header vazio também deve ser redatado
+	// Empty header should also be redacted
 	if result["Authorization"][0] != "***" {
 		t.Errorf("expected '***', got '%s'", result["Authorization"][0])
 	}
@@ -156,7 +156,7 @@ func TestRedactHeaders_MultipleValues(t *testing.T) {
 	
 	result := RedactHeaders(headers)
 	
-	// Todos os valores de Authorization devem ser redatados
+	// All Authorization values should be redacted
 	if len(result["Authorization"]) != 2 {
 		t.Errorf("expected 2 values, got %d", len(result["Authorization"]))
 	}
@@ -167,18 +167,18 @@ func TestRedactHeaders_MultipleValues(t *testing.T) {
 		t.Errorf("expected '***', got '%s'", result["Authorization"][1])
 	}
 	
-	// X-Custom não deve ser redatado
+	// X-Custom should not be redacted
 	if !reflect.DeepEqual(result["X-Custom"], []string{"value1", "value2"}) {
 		t.Errorf("expected ['value1', 'value2'], got %v", result["X-Custom"])
 	}
 }
 
 func TestRedactHeaders_WithSpaces(t *testing.T) {
-	// Testar com espaços na lista
+	// Test with spaces in the list
 	os.Setenv("LOGGER_REDACT_HEADERS", " Authorization , X-API-Key ")
 	defer os.Unsetenv("LOGGER_REDACT_HEADERS")
 	
-	// Resetar o cache
+	// Reset cache
 	resetRedactHeadersCache()
 	
 	headers := http.Header{
@@ -188,7 +188,7 @@ func TestRedactHeaders_WithSpaces(t *testing.T) {
 	
 	result := RedactHeaders(headers)
 	
-	// Ambos devem ser redatados mesmo com espaços na lista
+	// Both should be redacted even with spaces in the list
 	if result["Authorization"][0] != "***" {
 		t.Errorf("expected '***', got '%s'", result["Authorization"][0])
 	}
