@@ -3,6 +3,7 @@ package natsbridge
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/CoverWhale/caddy-nats-bridge/common"
 	"github.com/caddyserver/caddy/v2"
@@ -25,13 +26,14 @@ type NatsBridgeApp struct {
 
 type NatsServer struct {
 	// can also contain comma-separated list of URLs, see nats.Connect
-	NatsUrl            string `json:"url,omitempty"`
-	UserCredentialFile string `json:"userCredentialFile,omitempty"`
-	NkeyCredentialFile string `json:"nkeyCredentialFile,omitempty"`
-	JWT                string `json:"jwt,omitempty"`
-	Seed               string `json:"seed,omitempty"`
-	ClientName         string `json:"clientName,omitempty"`
-	InboxPrefix        string `json:"inboxPrefix,omitempty"`
+	NatsUrl            string         `json:"url,omitempty"`
+	UserCredentialFile string         `json:"userCredentialFile,omitempty"`
+	NkeyCredentialFile string         `json:"nkeyCredentialFile,omitempty"`
+	JWT                string         `json:"jwt,omitempty"`
+	Seed               string         `json:"seed,omitempty"`
+	ClientName         string         `json:"clientName,omitempty"`
+	InboxPrefix        string         `json:"inboxPrefix,omitempty"`
+	DefaultTimeout     *time.Duration `json:"defaultTimeout,omitempty"`
 
 	HandlersRaw []json.RawMessage `json:"handle,omitempty" caddy:"namespace=nats.handlers inline_key=handler"`
 
@@ -105,6 +107,8 @@ func (app *NatsBridgeApp) Start() error {
 			}
 			opts = append(opts, opt)
 		}
+
+		opts = append(opts, nats.MaxReconnects(-1))
 
 		server.Conn, err = nats.Connect(server.NatsUrl, opts...)
 		if err != nil {
